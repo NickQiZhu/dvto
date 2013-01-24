@@ -119,8 +119,8 @@
     var DISPATCH_TIME = "DispatchTime";
     var DISPATCH_DAY = "DispatchDay";
     var DISPATCH_HOUR = "DispatchHour";
-    var INCIDENT_NO = "IncidentNo";
-    var INCIDENT_TYPE = "IncidentType";
+    var INCIDENT_NO = "IncidentType";
+    var INCIDENT_TYPE = "Type";
     var ALARM_LEVEL = "AlarmLevel";
     var LAST_DISPATCH_UPDATE = "MAX(FireDispatchUpdate)";
     var DISPATCHED_UNITS = "DispatchedUnits";
@@ -130,6 +130,8 @@
     var incidentsDurationChart = dc.barChart("#incidents-duration");
     var dayOfWeekChart = dc.pieChart("#day-of-week");
     var hourOfDayChart = dc.barChart("#hour-of-day");
+
+    var typeDimension;
 
     d3.csv("incidents.csv", function (csv) {
         var dateFormat = d3.time.format("%Y-%m-%d %H:%M:%S");
@@ -287,17 +289,18 @@
             height = 300,
             fill = d3.scale.category20();
 
+        var radiusScale = d3.scale.linear().domain([0, 1000, 2000, 20000])
+                               .range([0, 10, 20, 30]);
+
         var force = d3.layout.force()
             .gravity(0.1)
-            .charge(-30)
+            .charge(function(d){return -(radiusScale(d.value) * 5); })
             .size([width, height]);
 
         var svg = d3.select("#bubbles").append("svg")
             .attr("width", width)
             .attr("height", height);
 
-        var radiusScale = d3.scale.linear().domain([0, 2000, 30000])
-                       .range([0, 10, 30]);
         var currentFilter;
 
         var typeNodes = svg.selectAll("circle")
@@ -339,13 +342,13 @@
         force
           .nodes(typeGroup.all())
           .links([])
-          .on("tick", tick)
           .start();
 
-        function tick() {
-            typeNodes.attr("cx", function(d) { return d.x = Math.max(radiusScale(d.value), Math.min(width - radiusScale(d.value), d.x)); })
-                .attr("cy", function(d) { return d.y = Math.max(radiusScale(d.value), Math.min(height - radiusScale(d.value), d.y)); });
-        }
+        force.on("tick", function(e) {
+          svg.selectAll("circle")
+              .attr("cx", function(d) { return d.x; })
+              .attr("cy", function(d) { return d.y; });
+        });
 
         dc.renderAll();
 
