@@ -48,14 +48,16 @@
             <div class="clearfix"></div>
         </div>
 
-        <div id="day-of-week">
-            <strong>Incidents by Day of the Week</strong>
+        <div id="hour-of-day">
+            <strong>Incidents by Hour</strong>
+            <a class="reset" href="javascript:hourOfDayChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+            <span class="reset" style="display: none;"> | Current filter: <span class="filter"></span></span>
 
             <div class="clearfix"></div>
         </div>
 
-        <div id="alarm-level">
-            <strong>Incidents by Alarm Levels</strong>
+        <div id="day-of-week">
+            <strong>Incidents by Day of the Week</strong>
 
             <div class="clearfix"></div>
         </div>
@@ -89,12 +91,13 @@
     var INCIDENT_TYPE = "IncidentType";
     var ALARM_LEVEL = "AlarmLevel";
     var LAST_DISPATCH_UPDATE = "MAX(FireDispatchUpdate)";
+    var DISPATCHED_UNITS = "DispatchedUnits";
 
     var incidentsByDayChart = dc.lineChart("#incidents-by-day-focus");
     var incidentsByDayContextChart = dc.lineChart("#incidents-by-day-context");
     var incidentsDurationChart = dc.barChart("#incidents-duration");
     var dayOfWeekChart = dc.pieChart("#day-of-week");
-    var alarmLevelChart = dc.pieChart("#alarm-level");
+    var hourOfDayChart = dc.barChart("#hour-of-day");
 
     d3.csv("incidents.csv", function (csv) {
         var dateFormat = d3.time.format("%Y-%m-%d %H:%M:%S");
@@ -106,7 +109,7 @@
             row[DISPATCH_TIME] = dateFormat.parse(row[DISPATCH_TIME]);
             row[LAST_DISPATCH_UPDATE] = dateFormat.parse(row[LAST_DISPATCH_UPDATE]);
             row[DISPATCH_DAY] = d3.time.day(row[DISPATCH_TIME]);
-            row[DISPATCH_HOUR] = d3.time.hour(row[DISPATCH_TIME]);
+            row[DISPATCH_HOUR] = row[DISPATCH_TIME].getHours();
         });
 
         var data = crossfilter(csv);
@@ -144,6 +147,11 @@
         });
         var dayOfWeekGroup = dayOfWeekDimension.group();
 
+        var hourOfDayDimension = data.dimension(function(d) {
+            return d[DISPATCH_HOUR];
+        });
+        var hourOfDayGroup = hourOfDayDimension.group();
+
         incidentsByDayChart.width(1100)
                 .height(200)
                 .margins({top: 10, right: 50, bottom: 30, left: 40})
@@ -177,30 +185,31 @@
                     });
                 });
 
-        incidentsDurationChart.width(500)
-                .height(200)
+        incidentsDurationChart.width(375)
+                .height(150)
                 .margins({top: 10, right: 50, bottom: 30, left: 40})
                 .dimension(incidentDuration)
                 .group(incidentDurationCountGroup)
                 .elasticY(true)
-                .gap(.5)
+                .gap(0)
                 .x(d3.scale.linear().domain([0, 120]));
 
-        dayOfWeekChart.width(200)
-                .height(200)
-                .radius(95)
-                .innerRadius(30)
+        hourOfDayChart.width(375)
+                .height(150)
+                .margins({top: 10, right: 50, bottom: 30, left: 40})
+                .dimension(hourOfDayDimension)
+                .group(hourOfDayGroup)
+                .elasticY(true)
+                .gap(1)
+                .x(d3.scale.linear().domain([0, 25]));
+
+        dayOfWeekChart.width(150)
+                .height(150)
+                .radius(70)
+                .innerRadius(20)
                 .colors(d3.scale.category20b())
                 .dimension(dayOfWeekDimension)
                 .group(dayOfWeekGroup);
-
-        alarmLevelChart.width(200)
-                        .height(200)
-                        .radius(95)
-                        .innerRadius(30)
-                        .colors(d3.scale.category20b())
-                        .dimension(alarmLevelDimension)
-                        .group(alarmLevelCountGroup);
 
         dc.dataCount(".dc-data-count")
                 .dimension(data)
