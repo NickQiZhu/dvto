@@ -9,6 +9,7 @@
     <script src="d3.v2.js"></script>
     <script src="crossfilter.js"></script>
     <script src="dc.js"></script>
+    <script src="jquery.js"></script>
 
     <style>
         #incidents-by-day-context svg g.chartBody path.area {
@@ -17,6 +18,23 @@
 
         #incidents-by-day-context svg g.chartBody path.line {
             stroke: grey;
+        }
+
+        circle {
+          stroke-width: 1.5px;
+        }
+
+        line {
+          stroke: #999;
+        }
+
+        grey-out {
+          fill-opacity: 0.3;
+          stroke-opacity: 0.3;
+        }
+
+        #bubbles svg circle{
+            cursor: pointer;
         }
     </style>
 </head>
@@ -29,6 +47,10 @@
 
     <section id="content" class="hide">
         <h2>Data Visualization</h2>
+
+        <div id="bubbles" class="row">
+            <h4>Incident Types</h4>
+        </div>
 
         <div class="row">
             <div id="incidents-by-day-focus">
@@ -124,6 +146,9 @@
 
         var data = crossfilter(csv);
         var all = data.groupAll();
+
+        var typeDimension = data.dimension(function(d){return d[INCIDENT_TYPE];});
+        var typeGroup = typeDimension.group();
 
         var dispatchDayDimension = data.dimension(function (d) {
             return d[DISPATCH_DAY];
@@ -257,6 +282,70 @@
                 .renderlet(function (table) {
                     table.selectAll(".dc-table-group").classed("info", true);
                 });
+
+        var width = 1100,
+            height = 300,
+            fill = d3.scale.category20();
+
+        var force = d3.layout.force()
+            .gravity(0.1)
+            .charge(-30)
+            .size([width, height]);
+
+        var svg = d3.select("#bubbles").append("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+        var radiusScale = d3.scale.linear().domain([0, 2000, 30000])
+                       .range([0, 10, 30]);
+        var currentFilter;
+
+        var typeNodes = svg.selectAll("circle")
+              .data(typeGroup.all())
+            .enter().append("circle")
+              .attr("r", function(d){return radiusScale(d.value);})
+              .style("fill", function(d, i) { return fill(i); })
+              .style("stroke", function(d, i) { return d3.rgb(fill(i)).darker(); })
+                .on("click", function(d){
+                    if(currentFilter != d.key){
+                        currentFilter = d.key;
+                        d3.select("#bubbles h4").text(currentFilter);
+                        typeDimension.filter(currentFilter);
+                        svg.selectAll("circle").each(function(d, i){
+                            if(d.key != currentFilter){
+                                d3.select(this).style("fill", "grey")
+                                    .style("stroke", "grey");
+                            }else{
+                                d3.select(this).style("fill", function(d) { return fill(i); })
+                                    .style("stroke", function(d) { return d3.rgb(fill(i)).darker(); })
+                            }
+                        });
+                        dc.events.trigger(function(){dc.redrawAll();});
+                    }else{
+                        currentFilter = null;
+                        d3.select("#bubbles h3").text("Incident Types");
+                        typeDimension.filter(currentFilter);
+                        svg.selectAll("circle").each(function(d, i){
+                            d3.select(this).style("fill", function(d) { return fill(i); })
+                                .style("stroke", function(d) { return d3.rgb(fill(i)).darker(); })
+                        });
+                        dc.events.trigger(function(){dc.redrawAll();});
+                    }
+                })
+              .call(force.drag);
+
+        svg.selectAll("circle").append("title").text(function(d){return d.key + " : " + d.value + " incidents";});
+
+        force
+          .nodes(typeGroup.all())
+          .links([])
+          .on("tick", tick)
+          .start();
+
+        function tick() {
+            typeNodes.attr("cx", function(d) { return d.x = Math.max(radiusScale(d.value), Math.min(width - radiusScale(d.value), d.x)); })
+                .attr("cy", function(d) { return d.y = Math.max(radiusScale(d.value), Math.min(height - radiusScale(d.value), d.y)); });
+        }
 
         dc.renderAll();
 
