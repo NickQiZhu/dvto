@@ -16,71 +16,81 @@
         }
 
         #incidents-by-day-context svg g.chartBody path.line {
-           stroke: grey;
+            stroke: grey;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Data Visualization</h2>
+    <section id="loading">
+        <h3>Loading ... </h3>
+    </section>
 
-    <div class="row">
-        <div id="incidents-by-day-focus">
-            <strong>Incidents by Day</strong>
-            <a class="reset" href="javascript:incidentsByDayContextChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
-            <span class="reset" style="display: none;"> | Current filter: <span class="filter"></span></span>
+    <section id="content" class="hide">
+        <h2>Data Visualization</h2>
 
-            <div class="clearfix"></div>
-        </div>
-    </div>
+        <div class="row">
+            <div id="incidents-by-day-focus">
+                <strong>Incidents by Day</strong>
+                <a class="reset" href="javascript:incidentsByDayContextChart.filterAll();dc.redrawAll();"
+                   style="display: none;">reset</a>
+                <span class="reset" style="display: none;"> | Current filter: <span class="filter"></span></span>
 
-    <div class="row">
-        <div id="incidents-by-day-context"></div>
-    </div>
-
-    <div class="row">
-        <div id="incidents-duration">
-            <strong>Incidents Durations</strong>
-            <a class="reset" href="javascript:incidentsDurationChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
-            <span class="reset" style="display: none;"> | Current filter: <span class="filter"></span></span>
-
-            <div class="clearfix"></div>
-        </div>
-
-        <div id="hour-of-day">
-            <strong>Incidents by Hour</strong>
-            <a class="reset" href="javascript:hourOfDayChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
-            <span class="reset" style="display: none;"> | Current filter: <span class="filter"></span></span>
-
-            <div class="clearfix"></div>
-        </div>
-
-        <div id="day-of-week">
-            <strong>Incidents by Day of the Week</strong>
-
-            <div class="clearfix"></div>
-        </div>
-    </div>
-
-    <div class="row">
-        <div >
-            <div class="dc-data-count">
-                <span class="filter-count"></span> selected out of <span class="total-count"></span> records | <a href="javascript:dc.filterAll(); dc.renderAll();">Reset All</a>
+                <div class="clearfix"></div>
             </div>
         </div>
-        <table class="table table-hover dc-data-table">
-            <thead>
-            <tr class="header">
-                <th>Dispatch Time</th>
-                <th>Incident No</th>
-                <th>Incident Type</th>
-                <th>AlarmLevel</th>
-                <th>Last Update Time</th>
-            </tr>
-            </thead>
-        </table>
-    </div>
+
+        <div class="row">
+            <div id="incidents-by-day-context"></div>
+        </div>
+
+        <div class="row">
+            <div id="incidents-duration">
+                <strong>Incidents Durations</strong>
+                <a class="reset" href="javascript:incidentsDurationChart.filterAll();dc.redrawAll();"
+                   style="display: none;">reset</a>
+                <span class="reset" style="display: none;"> | Current filter: <span class="filter"></span></span>
+
+                <div class="clearfix"></div>
+            </div>
+
+            <div id="hour-of-day">
+                <strong>Incidents by Hour</strong>
+                <a class="reset" href="javascript:hourOfDayChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+                <span class="reset" style="display: none;"> | Current filter: <span class="filter"></span></span>
+
+                <div class="clearfix"></div>
+            </div>
+
+            <div id="day-of-week">
+                <strong>Incidents by Day of the Week</strong>
+
+                <div class="clearfix"></div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div>
+                <div class="dc-data-count">
+                    <span class="filter-count"></span> selected out of <span class="total-count"></span> records | <a
+                        href="javascript:dc.filterAll(); dc.redrawAll();">Reset All</a>
+                </div>
+            </div>
+            <table class="table table-hover dc-data-table">
+                <thead>
+                <tr class="header">
+                    <th>Dispatch Time</th>
+                    <th>Incident No</th>
+                    <th>Incident Type</th>
+                    <th>AlarmLevel</th>
+                    <th>Last Update Time</th>
+                </tr>
+                </thead>
+            </table>
+        </div>
+    </section>
+
 </div>
 
 <script>
@@ -120,13 +130,13 @@
         });
         var incidentCountByDayGroup = dispatchDayDimension.group();
 
-        var incidentDuration = data.dimension(function(d){
+        var incidentDuration = data.dimension(function (d) {
             // duration in minutes
-            return Math.round((d[LAST_DISPATCH_UPDATE].getTime() - d[DISPATCH_TIME].getTime())/1000/60);
+            return Math.round((d[LAST_DISPATCH_UPDATE].getTime() - d[DISPATCH_TIME].getTime()) / 1000 / 60);
         });
         var incidentDurationCountGroup = incidentDuration.group();
 
-        var dayOfWeekDimension = data.dimension(function(d) {
+        var dayOfWeekDimension = data.dimension(function (d) {
             var day = d[DISPATCH_TIME].getDay();
             switch (day) {
                 case 0:
@@ -147,7 +157,7 @@
         });
         var dayOfWeekGroup = dayOfWeekDimension.group();
 
-        var hourOfDayDimension = data.dimension(function(d) {
+        var hourOfDayDimension = data.dimension(function (d) {
             return d[DISPATCH_HOUR];
         });
         var hourOfDayGroup = hourOfDayDimension.group();
@@ -162,9 +172,9 @@
                 .x(d3.time.scale().domain(timeDomain))
                 .brushOn(false)
                 .renderHorizontalGridLines(true)
-                .title(function(d){
+                .title(function (d) {
                     var value = d.value;
-                    if(isNaN(value)) value = 0;
+                    if (isNaN(value)) value = 0;
                     return dateDisplayFormat(d.key) + "\n" + numberFormat(value);
                 });
 
@@ -175,12 +185,12 @@
                 .group(incidentCountByDayGroup)
                 .renderArea(true)
                 .x(d3.time.scale().domain(timeDomain))
-                .renderlet(function(chart){
+                .renderlet(function (chart) {
                     chart.select("g.y").style("display", "none");
                     incidentsByDayChart.filter(chart.filter());
                 })
-                .renderlet(function(chart){
-                    dc.events.trigger(function(){
+                .renderlet(function (chart) {
+                    dc.events.trigger(function () {
                         incidentsByDayChart.focus(chart.filter());
                     });
                 });
@@ -200,8 +210,9 @@
                 .dimension(hourOfDayDimension)
                 .group(hourOfDayGroup)
                 .elasticY(true)
-                .gap(1)
-                .x(d3.scale.linear().domain([0, 25]));
+                .gap(.5)
+                .round(Math.round)
+                .x(d3.scale.linear().domain([0, 24]));
 
         dayOfWeekChart.width(150)
                 .height(150)
@@ -217,37 +228,40 @@
 
         dc.dataTable(".dc-data-table")
                 .dimension(dispatchDayDimension)
-                .group(function(d) {
+                .group(function (d) {
                     var format = d3.format("02d");
                     return d[DISPATCH_TIME].getFullYear() + "/" + format((d[DISPATCH_TIME].getMonth() + 1));
                 })
                 .size(10)
                 .columns([
-                    function(d) {
+                    function (d) {
                         return dateFormat(d[DISPATCH_TIME]);
                     },
-                    function(d) {
+                    function (d) {
                         return d[INCIDENT_NO];
                     },
-                    function(d) {
+                    function (d) {
                         return d[INCIDENT_TYPE];
                     },
-                    function(d) {
+                    function (d) {
                         return d[ALARM_LEVEL];
                     },
-                    function(d) {
+                    function (d) {
                         return dateFormat(d[LAST_DISPATCH_UPDATE]);
                     }
                 ])
-                .sortBy(function(d) {
+                .sortBy(function (d) {
                     return d[DISPATCH_TIME];
                 })
                 .order(d3.ascending)
-                .renderlet(function(table){
+                .renderlet(function (table) {
                     table.selectAll(".dc-table-group").classed("info", true);
                 });
 
         dc.renderAll();
+
+        d3.select("#loading").classed("hide", true);
+        d3.select("#content").classed("hide", false);
     });
 </script>
 </body>
