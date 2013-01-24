@@ -1,0 +1,11 @@
+# IDE files
+/.idea
+/*.iml
+
+# tmp files
+/node_modules
+*#
+*~
+
+# data files
+/*.csv
